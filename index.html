@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>全国油价查询</title>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <style>
+        *{
+            margin: 0;
+            padding: 0;
+        }
+        .bg{
+            width: 100vw;
+            height: 100vh;
+            background-image: url(./resources/bgImages.jpg);
+            background-size: cover;
+        }
+        .head{
+            text-align: center;
+            color:coral
+        }
+        .p1{
+            font-size: 30px;
+            color:#292d8f;
+        }
+        .searchDiv{
+            background-color: #faebd7b0;
+            border-radius: 18px;
+            margin: 35px 25px;
+            padding: 6px;
+            font-size: 25px;
+        }
+    </style>
+</head>
+<body>
+    <div class="bg">
+        <h1 class="head">全国油价查询</h1>
+        <div class="searchDiv">
+            地区：<input id="input1" type="text"><br>
+            省<select id="selectProvinces" ></select>
+            市<select id="selectCities"></select>
+            区(县/市)<select id="selectDistricts"></select>
+            <button id="button1" onclick="getFuelPrice()">查询</button>
+        </div>
+        <p id="text1"></p>
+        <p class="p1">92#汽油</p>
+        <p class="p1">95#汽油</p>
+        <p class="p1">98#汽油</p>
+        <p class="p1">0#柴油</p>
+        
+    </div>
+    <script>
+        const text1 = document.getElementById("text1")
+        const input1 = document.getElementById("input1")
+        const selectProvinces = document.getElementById("selectProvinces")
+        const selectCities = document.getElementById("selectCities")
+        const selectDistricts = document.getElementById("selectDistricts")
+        function getFuelPrice(){
+            $.ajax({
+                url:'https://funny.age63.work/v2/fuel-price?region='+input1.value,
+                type:'GET',
+                // data:input1.value,
+                success:function(data){
+                    
+                    text1.innerHTML =data.data.region +":"+ data.data.items[0].price_desc
+                },
+            })
+        }
+        function getPro(){
+            $.ajax({
+                url:'https://restapi.amap.com/v3/config/district?key=02583731ff74d3f51e33a223d2953520&keywords=中国&subdistrict=3',
+                type:'GET',
+                success:function(data){
+                    console.log(data.districts[0].districts)
+                    data.districts[0].districts.forEach(elementProvinces => {
+                        //省
+                        const optionProvinces = document.createElement("option")
+                        optionProvinces.text = elementProvinces.name
+                        optionProvinces.value = elementProvinces.name
+                        selectProvinces.add(optionProvinces)
+                        // function getCit(){
+                        //     if(elementProvinces.name == optionProvinces.value){
+                        //         elementProvinces.districts.forEach(elementCities => {
+                        //             const optionCities = document.createElement("option")
+                        //             optionCities.text = elementCities.name
+                        //             optionCities.value = elementCities.name
+                        //             selectCities.add(optionCities)
+                        //         })
+                        //     }
+                        // }
+                    });
+                }
+            })
+        }
+        getPro()
+
+        function handleProviceChange(event) {
+            console.log('选择了',event.target.value)
+        }
+
+        selectProvinces.addEventListener('change', handleProviceChange)
+    </script>
+</body>
+</html>
+<!-- 
+
+                        //市
+                        elementProvinces.districts.forEach(elementCities => {
+                            const optionCities = document.createElement("option")
+                            optionCities.text = elementCities.districts.name
+                            selectProvinces.add(optionCities)
+                        })
+
+                        
+                        //区
+                        const optionDistricts = document.createElement("option")
+                        optionDistricts.text = elementProvinces.
+                        selectProvinces.add(optionDistricts) -->
