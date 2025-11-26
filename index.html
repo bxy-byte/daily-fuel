@@ -20,7 +20,7 @@
             text-align: center;
             color:coral
         }
-        .p1{
+        .spanPrice{
             font-size: 30px;
             color:#292d8f;
         }
@@ -31,89 +31,144 @@
             padding: 6px;
             font-size: 25px;
         }
+        .inputDiv{
+            width: 200px;
+            font-size: 25px;
+        }
+        .font{
+            font-size: 25px;
+        }
+        .select{
+            width: 200px;
+            font-size: 25px;
+        }
+        .priceDiv{
+            background-color: #faebd7bf;
+            margin:65px 25px 0;
+            padding: 20px;
+            border-radius: 18px;
+        }
+        .buttonQuery{
+            font-size: 20px;
+            color: darkcyan;
+            background-color: beige;
+            border-radius: 10px;
+        }
     </style>
 </head>
 <body>
     <div class="bg">
         <h1 class="head">全国油价查询</h1>
         <div class="searchDiv">
-            地区：<input id="input1" type="text"><br>
-            省<select id="selectProvinces" ></select>
-            市<select id="selectCities"></select>
-            区(县/市)<select id="selectDistricts"></select>
-            <button id="button1" onclick="getFuelPrice()">查询</button>
+            <span class="font">地区：</span><input class="inputDiv" id="inputDis" type="text"><br>
+            <span class="font">省(市)：</span><select class="select" id="selectProvinces" >
+                <option>请选择省</option>
+            </select><br>
+            <span class="font">市：</span><select class="select" id="selectCities">
+                <option>请选择市</option>
+            </select><br>
+            <span class="font">区(县/市)：</span><select class="select" id="selectDistricts">
+                <option>请选择区</option>
+            </select><br>
+            <button class="buttonQuery" id="buttonQuery" onclick="getFuelPrice()">查询</button>
+            <button class="buttonQuery" onclick="dbsFuelPrice()">调兵山油价</button>
         </div>
-        <p id="text1"></p>
-        <p class="p1">92#汽油</p>
-        <p class="p1">95#汽油</p>
-        <p class="p1">98#汽油</p>
-        <p class="p1">0#柴油</p>
+        <div class="priceDiv"> 
+            <span class="spanPrice">92#汽油：</span><span id="price92" class="spanPrice"></span><br>
+            <span class="spanPrice">95#汽油：</span><span id="price95" class="spanPrice"></span><br>
+            <span class="spanPrice">98#汽油：</span><span id="price98" class="spanPrice"></span><br>
+            <span class="spanPrice">0#柴油：</span><span id="price0" class="spanPrice"></span><br>
+        </div>
         
     </div>
     <script>
         const text1 = document.getElementById("text1")
-        const input1 = document.getElementById("input1")
+        const inputDis = document.getElementById("inputDis")
         const selectProvinces = document.getElementById("selectProvinces")
         const selectCities = document.getElementById("selectCities")
-        const selectDistricts = document.getElementById("selectDistricts")
+        const selectDistricts = document.getElementById("selectDistricts")                
+        const price92 = document.getElementById("price92")
+        const price95 = document.getElementById("price95")
+        const price98 = document.getElementById("price98")
+        const price0 = document.getElementById("price0")
+
+        let pcdDatas = []
+        //获取油价
         function getFuelPrice(){
             $.ajax({
-                url:'https://funny.age63.work/v2/fuel-price?region='+input1.value,
+                url:'https://funny.age63.work/v2/fuel-price?region='+inputDis.value,
                 type:'GET',
-                // data:input1.value,
+                // data:inputDis.value,
                 success:function(data){
-                    
-                    text1.innerHTML =data.data.region +":"+ data.data.items[0].price_desc
+                    price92.innerHTML = data.data.items[0].price_desc
+                    price95.innerHTML = data.data.items[1].price_desc
+                    price98.innerHTML = data.data.items[2].price_desc
+                    price0.innerHTML = data.data.items[3].price_desc
                 },
             })
         }
+        //填充省份下拉框
         function getPro(){
             $.ajax({
                 url:'https://restapi.amap.com/v3/config/district?key=02583731ff74d3f51e33a223d2953520&keywords=中国&subdistrict=3',
                 type:'GET',
                 success:function(data){
-                    console.log(data.districts[0].districts)
-                    data.districts[0].districts.forEach(elementProvinces => {
-                        //省
+                    pcdDatas = data.districts[0].districts
+                    pcdDatas.forEach(pcdDatas => {
                         const optionProvinces = document.createElement("option")
-                        optionProvinces.text = elementProvinces.name
-                        optionProvinces.value = elementProvinces.name
+                        optionProvinces.text = pcdDatas.name
+                        optionProvinces.value = pcdDatas.name
                         selectProvinces.add(optionProvinces)
-                        // function getCit(){
-                        //     if(elementProvinces.name == optionProvinces.value){
-                        //         elementProvinces.districts.forEach(elementCities => {
-                        //             const optionCities = document.createElement("option")
-                        //             optionCities.text = elementCities.name
-                        //             optionCities.value = elementCities.name
-                        //             selectCities.add(optionCities)
-                        //         })
-                        //     }
-                        // }
                     });
                 }
             })
         }
         getPro()
+        //填充市下拉框
+        function handleProviceChange(event){
+            selectCities.innerHTML = ' '     
+            pcdDatas.forEach(pcdDatas => {
+                if(pcdDatas.name === event.target.value){
+                    pcdDatas.districts.forEach(elementCities => {
+                        const optionCities = document.createElement("option")
+                        optionCities.text = elementCities.name
+                        optionCities.value = elementCities.name
+                        selectCities.add(optionCities)
+                    })
+                }
+            })
 
-        function handleProviceChange(event) {
-            console.log('选择了',event.target.value)
         }
-
         selectProvinces.addEventListener('change', handleProviceChange)
+        //填充区县下拉框
+        function handleCitiesChange(event){
+            selectDistricts.innerHTML = ' '
+            pcdDatas.forEach(pcdDatas => {
+                if(pcdDatas.name === selectProvinces.value){
+                    pcdDatas.districts.forEach(elementCities => {
+                        if(elementCities.name === event.target.value){
+                            elementCities.districts.forEach(elementDistricts => {
+                                const optionDistricts = document.createElement("option")
+                                optionDistricts.text = elementDistricts.name
+                                optionDistricts.value = elementDistricts.name
+                                selectDistricts.add(optionDistricts)
+                            })
+                        }
+                    })
+                }
+            })
+        }
+        selectCities.addEventListener('change',handleCitiesChange)
+        //填充区县到地区输入框
+        function handleDistrictsChange(event){
+            inputDis.value = event.target.value.replace(/[区县市]$/,'')
+        }
+        selectDistricts.addEventListener('change',handleDistrictsChange)
+        //调兵山油价
+        function dbsFuelPrice(){
+            inputDis.value = '调兵山'
+            getFuelPrice()
+        }
     </script>
 </body>
 </html>
-<!-- 
-
-                        //市
-                        elementProvinces.districts.forEach(elementCities => {
-                            const optionCities = document.createElement("option")
-                            optionCities.text = elementCities.districts.name
-                            selectProvinces.add(optionCities)
-                        })
-
-                        
-                        //区
-                        const optionDistricts = document.createElement("option")
-                        optionDistricts.text = elementProvinces.
-                        selectProvinces.add(optionDistricts) -->
