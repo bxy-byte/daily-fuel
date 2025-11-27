@@ -47,12 +47,30 @@
             margin:65px 25px 0;
             padding: 20px;
             border-radius: 18px;
+            position: relative;
         }
         .buttonQuery{
             font-size: 20px;
             color: darkcyan;
             background-color: beige;
             border-radius: 10px;
+        }
+        .loader{
+            display: none;
+            width: 32px;
+            height: 32px;
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        @keyframes spin{
+            0% {transform: translate(-50%, -50%) rotate(0deg);}
+            100% {transform:translate(-50%, -50%) rotate(360deg);}
         }
     </style>
 </head>
@@ -79,6 +97,7 @@
             <span class="spanPrice">95#汽油：</span><span id="price95" class="spanPrice"></span><br>
             <span class="spanPrice">98#汽油：</span><span id="price98" class="spanPrice"></span><br>
             <span class="spanPrice">0#柴油：</span><span id="price0" class="spanPrice"></span><br>
+            <div class="loader" id="loader"></div>
         </div>
         
     </div>
@@ -92,22 +111,9 @@
         const price95 = document.getElementById("price95")
         const price98 = document.getElementById("price98")
         const price0 = document.getElementById("price0")
+        const loader = document.getElementById('loader')
 
         let pcdDatas = []
-        //获取油价
-        function getFuelPrice(){
-            $.ajax({
-                url:'https://funny.age63.work/v2/fuel-price?region='+inputDis.value,
-                type:'GET',
-                // data:inputDis.value,
-                success:function(data){
-                    price92.innerHTML = data.data.items[0].price_desc
-                    price95.innerHTML = data.data.items[1].price_desc
-                    price98.innerHTML = data.data.items[2].price_desc
-                    price0.innerHTML = data.data.items[3].price_desc
-                },
-            })
-        }
         //填充省份下拉框
         function getPro(){
             $.ajax({
@@ -115,56 +121,90 @@
                 type:'GET',
                 success:function(data){
                     pcdDatas = data.districts[0].districts
+                    let optionsStr = '<option value=请选择省>请选择省</option>'
                     pcdDatas.forEach(pcdDatas => {
-                        const optionProvinces = document.createElement("option")
-                        optionProvinces.text = pcdDatas.name
-                        optionProvinces.value = pcdDatas.name
-                        selectProvinces.add(optionProvinces)
+                        optionsStr += `
+                            <option value=${pcdDatas.name}>${pcdDatas.name}</option>
+                        `
                     });
+                    selectProvinces.innerHTML = optionsStr
                 }
-            })
+            })            
         }
         getPro()
         //填充市下拉框
         function handleProviceChange(event){
-            selectCities.innerHTML = ' '     
+            let optionsStr = `
+                <option value=请选择市>请选择市</option>
+            `              
             pcdDatas.forEach(pcdDatas => {
                 if(pcdDatas.name === event.target.value){
                     pcdDatas.districts.forEach(elementCities => {
-                        const optionCities = document.createElement("option")
-                        optionCities.text = elementCities.name
-                        optionCities.value = elementCities.name
-                        selectCities.add(optionCities)
+                        optionsStr += `
+                            <option value=${elementCities.name}>${elementCities.name}</option>
+                        `
                     })
+                    selectCities.innerHTML = optionsStr
                 }
             })
-
+            inputDis.value = event.target.value.replace(/(省|自治区|维吾尔自治区|壮族自治区|回族自治区)$/,'')
         }
         selectProvinces.addEventListener('change', handleProviceChange)
-        //填充区县下拉框
+        //填充区县到下拉框
         function handleCitiesChange(event){
             selectDistricts.innerHTML = ' '
             pcdDatas.forEach(pcdDatas => {
                 if(pcdDatas.name === selectProvinces.value){
                     pcdDatas.districts.forEach(elementCities => {
                         if(elementCities.name === event.target.value){
+                            let optionsStr = '<option value=请选择区县>请选择区县</option>'
                             elementCities.districts.forEach(elementDistricts => {
-                                const optionDistricts = document.createElement("option")
-                                optionDistricts.text = elementDistricts.name
-                                optionDistricts.value = elementDistricts.name
-                                selectDistricts.add(optionDistricts)
+                                optionsStr += `
+                                    <option value=${elementDistricts.name}>${elementDistricts.name}</option>
+                                `
                             })
+                            selectDistricts.innerHTML = optionsStr
                         }
                     })
                 }
-            })
+            })            
+            inputDis.value = event.target.value.replace(/[区县市旗]$/,'')
         }
-        selectCities.addEventListener('change',handleCitiesChange)
         //填充区县到地区输入框
         function handleDistrictsChange(event){
             inputDis.value = event.target.value.replace(/[区县市]$/,'')
         }
-        selectDistricts.addEventListener('change',handleDistrictsChange)
+        selectDistricts.addEventListener('change',handleDistrictsChange)        
+        selectCities.addEventListener('change',handleCitiesChange)
+        //查询油价
+        function getFuelPrice(){
+            if(inputDis.value === '') {
+                alert('请输入或选择地区')
+                return
+            }
+            showLoading()
+            $.ajax({
+                url:'https://funny.age63.work/v2/fuel-price?region='+inputDis.value,
+                type:'GET',
+                // data:inputDis.value,
+                success:function(data){
+                    console.log(data)
+                    if(data.code !== 200) alert(data.message + '\n' + '手动输入无“区/市”等后缀的地名尝试')
+                    if(data.code === 200){ 
+                        price92.innerHTML = data.data.items[0].price_desc
+                        price95.innerHTML = data.data.items[1].price_desc
+                        price98.innerHTML = data.data.items[2].price_desc
+                        price0.innerHTML = data.data.items[3].price_desc
+                    }
+                },
+                error:function(){
+
+                },
+                complete:function(){
+                    hideLoading()
+                }
+            })
+        }        
         //调兵山油价
         function dbsFuelPrice(){
             inputDis.value = '调兵山'
@@ -174,6 +214,13 @@
         function dlFuelPrice(){
             inputDis.value = '大连'
             getFuelPrice()
+        }
+        //loading
+        function showLoading(){
+            loader.style.display = 'block'
+        }
+        function hideLoading(){
+            loader.style.display = 'none'
         }
     </script>
 </body>
