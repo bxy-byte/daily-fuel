@@ -72,6 +72,7 @@
             </select><br>
             <button class="buttonQuery" id="buttonQuery" onclick="getFuelPrice()">查询</button>
             <button class="buttonQuery" onclick="dbsFuelPrice()">调兵山油价</button>
+            <button class="buttonQuery" onclick="dlFuelPrice()">大连油价</button>
         </div>
         <div class="priceDiv"> 
             <span class="spanPrice">92#汽油：</span><span id="price92" class="spanPrice"></span><br>
@@ -167,6 +168,11 @@
         //调兵山油价
         function dbsFuelPrice(){
             inputDis.value = '调兵山'
+            getFuelPrice()
+        }
+        //大连油价
+        function dlFuelPrice(){
+            inputDis.value = '大连'
             getFuelPrice()
         }
     </script>
